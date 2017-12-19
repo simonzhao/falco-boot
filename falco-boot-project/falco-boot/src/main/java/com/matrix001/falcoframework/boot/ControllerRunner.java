@@ -57,7 +57,7 @@ public class ControllerRunner implements Runnable {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
-        response.headers().set(CONTENT_TYPE, "text/plain");
+        response.headers().set(CONTENT_TYPE, "application/json;charset=UTF-8");
         response.headers().setInt(CONTENT_LENGTH, response.content().readableBytes());
 
         ctx.writeAndFlush(response);
