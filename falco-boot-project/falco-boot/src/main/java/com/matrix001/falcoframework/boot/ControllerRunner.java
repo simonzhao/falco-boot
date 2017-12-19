@@ -1,5 +1,7 @@
 package com.matrix001.falcoframework.boot;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -38,8 +40,15 @@ public class ControllerRunner implements Runnable {
     public void run() {
         FullHttpResponse response = null;
         try {
-            String content = (String)method.invoke(object);
             Class<?> returnType = method.getReturnType();
+            String content = null;
+            if (returnType.getName() == "java.lang.String]") {
+                content = (String) method.invoke(object);
+            } else {
+                Object obj = method.invoke(object);
+                Gson gson = new GsonBuilder().create();
+                content = gson.toJson(obj);
+            }
             logger.debug("ReturnType:[{}]", returnType.getName());
             response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(content.getBytes()));
 
