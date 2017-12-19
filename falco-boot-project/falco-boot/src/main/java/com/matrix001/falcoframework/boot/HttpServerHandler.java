@@ -8,17 +8,22 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.util.AsciiString;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 public class HttpServerHandler extends ChannelInboundHandlerAdapter {
-    private static final byte[] CONTENT = { 'H', 'e', 'l', 'l', 'o', ' ', 'W', 'o', 'r', 'l', 'd' };
+    private Logger logger = LoggerFactory.getLogger(HttpServerHandler.class);
 
+    private static Map<String, Method> requestMap = new HashMap<String, Method>();
+    private static Map<String, Object> clesses = new HashMap<String, Object>();
 
-    private static final AsciiString CONTENT_TYPE = AsciiString.cached("Content-Type");
-    private static final AsciiString CONTENT_LENGTH = AsciiString.cached("Content-Length");
-    private static final AsciiString CONNECTION = AsciiString.cached("Connection");
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx){
@@ -30,12 +35,26 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof HttpRequest){
             HttpRequest req = (HttpRequest)msg;
 
-            FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(CONTENT));
-            response.headers().set(CONTENT_TYPE, "text/plain");
-            response.headers().setInt(CONTENT_LENGTH, response.content().readableBytes());
+            String url = req.uri();
+            logger.info("URI:[{}]", url);
 
-            ctx.write(response).addListener(ChannelFutureListener.CLOSE);
+            Method method = requestMap.get(url);
+            if(method != null) {
+                Class<?> className = method.getDeclaringClass();
+                Object object = clesses.get(className.getName());
 
+                JobPool.getPool().execute(new ControllerRunner(ctx, method, object, req));
+            } else {
+                ctx.fireChannelRead(msg);
+            }
         }
+    }
+
+    public static void addRequest(String url, Method method){
+        requestMap.put(url, method);
+    }
+
+    public static void addClass(String className, Object object){
+        clesses.put(className, object);
     }
 }
