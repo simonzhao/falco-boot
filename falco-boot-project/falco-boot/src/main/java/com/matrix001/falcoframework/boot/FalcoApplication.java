@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 public class FalcoApplication {
     private Class<?> primarySource;
@@ -89,6 +90,8 @@ public class FalcoApplication {
         } finally {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
+            ExecutorService pool = JobPool.getPool();
+            pool.shutdown();
         }
         return context;
     }
