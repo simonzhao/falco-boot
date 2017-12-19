@@ -17,6 +17,7 @@ import org.reflections.scanners.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
 
@@ -55,13 +56,23 @@ public class FalcoApplication {
             RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
             String[] paths = requestMapping.value();
             for(String path : paths) {
-                logger.debug("Class:[{}] by [{}.{}]", path, clazz.getName(), method.getName());
+                logger.debug("Request:[{}] by [{}.{}]", path, clazz.getName(), method.getName());
+                try {
+                    method.invoke(clazz.newInstance());
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                } catch (InstantiationException e) {
+                    e.printStackTrace();
+                }
             }
             logger.debug("Class:[{}.{}]", clazz.getName(), method.getName());
         }
 
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
+        JobPool.init(8);
 
         try {
             ServerBootstrap b = new ServerBootstrap();
