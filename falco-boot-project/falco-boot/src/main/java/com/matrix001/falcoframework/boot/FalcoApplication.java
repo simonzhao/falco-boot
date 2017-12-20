@@ -17,8 +17,10 @@ import org.reflections.scanners.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
@@ -26,14 +28,37 @@ public class FalcoApplication {
     private Class<?> primarySource;
     private Logger logger = LoggerFactory.getLogger(FalcoApplication.class);
 
+    private int port = 8080;
+
     public FalcoApplication(Class<?> primarySource) {
         this.primarySource = primarySource;
     }
 
+    private void loadConfigureFormApplicationProperties(){
+        Properties pps = new Properties();
+        //InputStream in = this.primarySource.getClassLoader().getResourceAsStream("/application.properties");
+        InputStream in = ClassLoader.class.getResourceAsStream("/application.properties");
+        try {
+            pps.load(in);
+            in.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
+            try {
+                in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        this.port = Integer.valueOf(pps.getProperty("server.port", "8080"));
+        logger.info("Server Port:[{}]", this.port);
+    }
     public ConfigurableApplicationContext run(String... args) {
-        ConfigurableApplicationContext context = null;
-        logger.info("Hello World!");
+        this.loadConfigureFormApplicationProperties();
 
+        ConfigurableApplicationContext context = null;
         Package packages = this.primarySource.getPackage();
         logger.debug("Package:[{}]", packages.getName());
 
@@ -82,7 +107,7 @@ public class FalcoApplication {
                     .handler(new LoggingHandler(LogLevel.INFO))
                     .childHandler(new FalcoChannelInitializer());
 
-            Channel ch = b.bind(8080).sync().channel();
+            Channel ch = b.bind(this.port).sync().channel();
             ch.closeFuture().sync();
         } catch (InterruptedException e) {
             e.printStackTrace();
