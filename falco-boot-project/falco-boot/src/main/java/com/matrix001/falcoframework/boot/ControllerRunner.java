@@ -14,6 +14,10 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -39,15 +43,17 @@ public class ControllerRunner implements Runnable {
     }
     public void run() {
         FullHttpResponse response = null;
+        String contentType = "text/html;charset=UTF-8";
         try {
             Class<?> returnType = method.getReturnType();
             String content = null;
-            if (returnType.getName() == "java.lang.String]") {
+            if (returnType.getName() == "java.lang.String") {
                 content = (String) method.invoke(object);
             } else {
                 Object obj = method.invoke(object);
                 Gson gson = new GsonBuilder().create();
                 content = gson.toJson(obj);
+                contentType = "application/json;charset=UTF-8";
             }
             logger.debug("ReturnType:[{}]", returnType.getName());
             response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(content.getBytes()));
@@ -57,8 +63,13 @@ public class ControllerRunner implements Runnable {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
-        response.headers().set(CONTENT_TYPE, "application/json;charset=UTF-8");
+        Calendar cd = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat( "EEE, d MMM yyyy HH:mm:ss 'GMT'", Locale.US);
+        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+        response.headers().set(CONTENT_TYPE, contentType);
         response.headers().setInt(CONTENT_LENGTH, response.content().readableBytes());
+        response.headers().set("Date", sdf.format(cd.getTime()));
+        response.headers().set("X-Application-Context","application");
 
         ctx.writeAndFlush(response);
         ctx.close();
