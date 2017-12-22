@@ -3,22 +3,16 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>falco-boot-build</artifactId>
         <groupId>com.matrix001.falcoframework.boot</groupId>
+        <artifactId>falco-boot-dependencies</artifactId>
         <version>1.0-SNAPSHOT</version>
+        <relativePath>../falco-boot-dependencies</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-
-    <artifactId>falco-boot-project</artifactId>
-    <name>Falco Boot Project</name>
     <packaging>pom</packaging>
-    <modules>
-        <module>falco-boot</module>
-        <module>falco-boot-starters</module>
-        <module>falco-boot-dependencies</module>
-        <module>falco-boot-parent</module>
-        <module>falco-boot-tools</module>
-    </modules>
+
+    <artifactId>falco-boot-parent</artifactId>
+    <name>Falco Boot Parent</name>
 
 
 </project>
